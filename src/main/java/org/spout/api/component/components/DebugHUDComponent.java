@@ -134,19 +134,6 @@ public class DebugHUDComponent extends EntityComponent {
 		screen.setTakesInput(false);
 		final RenderPartsHolderComponent debugBar = debug.add(RenderPartsHolderComponent.class);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 		//The pop-out bar
 		final RenderPart bar = new RenderPart();
 		bar.setRenderMaterial(SpoutRenderMaterials.GUI_COLOR);
