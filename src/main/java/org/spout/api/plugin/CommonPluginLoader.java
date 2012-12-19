@@ -1,28 +1,28 @@
 /*
  * This file is part of SpoutAPI.
  *
- * Copyright (c) 2011-2012, Spout LLC <http://www.spout.org/>
- * SpoutAPI is licensed under the Spout License Version 1.
+ * Copyright (c) 2011-2012, SpoutDev <http://www.spout.org/>
+ * SpoutAPI is licensed under the SpoutDev License Version 1.
  *
- * SpoutAPI is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
+ * SpoutAPI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * In addition, 180 days after any changes are published, you can use the
  * software, incorporating those changes, under the terms of the MIT license,
- * as described in the Spout License Version 1.
+ * as described in the SpoutDev License Version 1.
  *
- * SpoutAPI is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
- * more details.
+ * SpoutAPI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License,
- * the MIT license and the Spout License Version 1 along with this program.
+ * the MIT license and the SpoutDev License Version 1 along with this program.
  * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
- * License and see <http://spout.in/licensev1> for the full license, including
- * the MIT license.
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
  */
 package org.spout.api.plugin;
 
@@ -51,28 +51,23 @@ import org.spout.api.exception.InvalidDescriptionFileException;
 import org.spout.api.exception.InvalidPluginException;
 import org.spout.api.exception.UnknownDependencyException;
 import org.spout.api.exception.UnknownSoftDependencyException;
-import org.spout.api.plugin.security.CommonSecurityManager;
 
 public class CommonPluginLoader implements PluginLoader {
 	public static final String YAML_SPOUT = "properties.yml";
 	public static final String YAML_OTHER = "plugin.yml";
 	protected final Engine engine;
 	private final Pattern[] patterns;
-	private final CommonSecurityManager manager;
-	private final double key;
 	@SuppressWarnings("unchecked")
 	private final Map<String, CommonClassLoader> loaders = new CaseInsensitiveMap();
 
-	public CommonPluginLoader(final Engine engine, final CommonSecurityManager manager, final double key) {
+	public CommonPluginLoader(final Engine engine) {
 		this.engine = engine;
-		this.manager = manager;
-		this.key = key;
-		patterns = new Pattern[]{Pattern.compile("\\.jar$")};
+		this.patterns = new Pattern[]{Pattern.compile("\\.jar$")};
 	}
 
 	@Override
 	public Pattern[] getPatterns() {
-		return patterns;
+		return this.patterns;
 	}
 
 	@Override
@@ -85,18 +80,18 @@ public class CommonPluginLoader implements PluginLoader {
 			CommonPlugin cp = (CommonPlugin) plugin;
 			String name = cp.getDescription().getName();
 
-			if (!loaders.containsKey(name)) {
-				loaders.put(name, (CommonClassLoader) cp.getClassLoader());
+			if (!this.loaders.containsKey(name)) {
+				this.loaders.put(name, (CommonClassLoader) cp.getClassLoader());
 			}
 
 			try {
 				cp.setEnabled(true);
 				cp.onEnable();
 			} catch (Throwable e) {
-				engine.getLogger().log(Level.SEVERE, "An error occured when enabling '" + plugin.getDescription().getFullName() + "': " + e.getMessage(), e);
+				this.engine.getLogger().log(Level.SEVERE, "An error occured when enabling '" + plugin.getDescription().getFullName() + "': " + e.getMessage(), e);
 			}
 
-			engine.getEventManager().callEvent(new PluginEnableEvent(cp));
+			this.engine.getEventManager().callEvent(new PluginEnableEvent(cp));
 		}
 	}
 
@@ -110,18 +105,18 @@ public class CommonPluginLoader implements PluginLoader {
 			CommonPlugin cp = (CommonPlugin) paramPlugin;
 			String name = cp.getDescription().getName();
 
-			if (!loaders.containsKey(name)) {
-				loaders.put(name, (CommonClassLoader) cp.getClassLoader());
+			if (!this.loaders.containsKey(name)) {
+				this.loaders.put(name, (CommonClassLoader) cp.getClassLoader());
 			}
 
 			try {
 				cp.setEnabled(false);
 				cp.onDisable();
 			} catch (Throwable t) {
-				engine.getLogger().log(Level.SEVERE, "An error occurred when disabling plugin '" + paramPlugin.getDescription().getFullName() + "' : " + t.getMessage(), t);
+				this.engine.getLogger().log(Level.SEVERE, "An error occurred when disabling plugin '" + paramPlugin.getDescription().getFullName() + "' : " + t.getMessage(), t);
 			}
 
-			engine.getEventManager().callEvent(new PluginDisableEvent(cp));
+			this.engine.getEventManager().callEvent(new PluginDisableEvent(cp));
 		}
 	}
 
@@ -147,7 +142,7 @@ public class CommonPluginLoader implements PluginLoader {
 		}
 
 		try {
-			if (engine.getPlatform() == Platform.CLIENT) {
+			if (this.engine.getPlatform() == Platform.CLIENT) {
 				loader = new ClientClassLoader(this, this.getClass().getClassLoader(), desc.getDepends(), desc.getSoftDepends());
 			} else {
 				loader = new CommonClassLoader(this, this.getClass().getClassLoader(), desc.getDepends(), desc.getSoftDepends());
@@ -156,17 +151,12 @@ public class CommonPluginLoader implements PluginLoader {
 			Class<?> main = Class.forName(desc.getMain(), true, loader);
 			Class<? extends CommonPlugin> plugin = main.asSubclass(CommonPlugin.class);
 
-			boolean locked = manager.lock(key);
-
 			Constructor<? extends CommonPlugin> constructor = plugin.getConstructor();
 
 			result = constructor.newInstance();
 
-			result.initialize(this, engine, desc, dataFolder, paramFile, loader);
+			result.initialize(this, this.engine, desc, dataFolder, paramFile, loader);
 
-			if (!locked) {
-				manager.unlock(key);
-			}
 		} catch (Exception e) {
 			throw new InvalidPluginException(e);
 		} catch (UnsupportedClassVersionError e) {
@@ -177,7 +167,7 @@ public class CommonPluginLoader implements PluginLoader {
 		}
 
 		loader.setPlugin(result);
-		loaders.put(desc.getName(), loader);
+		this.loaders.put(desc.getName(), loader);
 
 		return result;
 	}
@@ -193,10 +183,10 @@ public class CommonPluginLoader implements PluginLoader {
 		}
 
 		for (String depend : softdepend) {
-			if (loaders == null) {
+			if (this.loaders == null) {
 				throw new UnknownSoftDependencyException(depend);
 			}
-			if (!loaders.containsKey(depend)) {
+			if (!this.loaders.containsKey(depend)) {
 				throw new UnknownSoftDependencyException(depend);
 			}
 		}
@@ -213,10 +203,10 @@ public class CommonPluginLoader implements PluginLoader {
 		}
 
 		for (String depend : depends) {
-			if (loaders == null) {
+			if (this.loaders == null) {
 				throw new UnknownDependencyException(depend);
 			}
-			if (!loaders.containsKey(depend)) {
+			if (!this.loaders.containsKey(depend)) {
 				throw new UnknownDependencyException(depend);
 			}
 		}
@@ -259,14 +249,14 @@ public class CommonPluginLoader implements PluginLoader {
 				try {
 					in.close();
 				} catch (IOException e) {
-					engine.getLogger().log(Level.WARNING, "Problem closing input stream", e);
+					this.engine.getLogger().log(Level.WARNING, "Problem closing input stream", e);
 				}
 			}
 			if (jar != null) {
 				try {
 					jar.close();
 				} catch (IOException e) {
-					engine.getLogger().log(Level.WARNING, "Problem closing jar input stream", e);
+					this.engine.getLogger().log(Level.WARNING, "Problem closing jar input stream", e);
 				}
 			}
 		}
@@ -278,7 +268,7 @@ public class CommonPluginLoader implements PluginLoader {
 
 		for (String dependency : commonLoader.getDepends()) {
 			try {
-				Class<?> clazz = loaders.get(dependency).findClass(name, false);
+				Class<?> clazz = this.loaders.get(dependency).findClass(name, false);
 				if (clazz != null) {
 					return clazz;
 				}
@@ -289,7 +279,7 @@ public class CommonPluginLoader implements PluginLoader {
 
 		for (String softDependency : commonLoader.getSoftDepends()) {
 			try {
-				Class<?> clazz = loaders.get(softDependency).findClass(name, false);
+				Class<?> clazz = this.loaders.get(softDependency).findClass(name, false);
 				if (clazz != null) {
 					return clazz;
 				}
@@ -298,11 +288,11 @@ public class CommonPluginLoader implements PluginLoader {
 			ignore.add(softDependency);
 		}
 
-		for (String current : loaders.keySet()) {
+		for (String current : this.loaders.keySet()) {
 			if (ignore.contains(current)) {
 				continue;
 			}
-			CommonClassLoader loader = loaders.get(current);
+			CommonClassLoader loader = this.loaders.get(current);
 			if (loader == commonLoader) {
 				continue;
 			}
