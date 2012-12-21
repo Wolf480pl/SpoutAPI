@@ -63,16 +63,16 @@ public class CommonClassLoader extends URLClassLoader {
 		pluginsForClassNames.put(plugin.getClass().getName(), plugin);
 	}
 
-	protected CommonPlugin getPlugin() {
-		return plugin;
+	public CommonPlugin getPlugin() {
+		return this.plugin;
 	}
 
 	public List<String> getDepends() {
-		return depends;
+		return this.depends;
 	}
 
 	public List<String> getSoftDepends() {
-		return softDepends;
+		return this.softDepends;
 	}
 
 	@Override
@@ -81,7 +81,7 @@ public class CommonClassLoader extends URLClassLoader {
 	}
 
 	protected Class<?> findClass(String name, boolean checkGlobal) throws ClassNotFoundException {
-		Class<?> result = classes.get(name);
+		Class<?> result = this.classes.get(name);
 
 		if (result == null) {
 			try {
@@ -90,12 +90,12 @@ public class CommonClassLoader extends URLClassLoader {
 			}
 
 			if (result == null && checkGlobal) {
-				result = loader.getClassByName(name, this);
+				result = this.loader.getClassByName(name, this);
 			}
 
 			if (result != null) {
-				classes.put(name, result);
-				pluginsForClassNames.put(name, plugin);
+				this.classes.put(name, result);
+				pluginsForClassNames.put(name, this.plugin);
 			} else {
 				throw new ClassNotFoundException(name);
 			}
@@ -109,7 +109,7 @@ public class CommonClassLoader extends URLClassLoader {
 	 * @return set of class names
 	 */
 	public Set<String> getClassNames() {
-		return Collections.unmodifiableSet(classes.keySet());
+		return Collections.unmodifiableSet(this.classes.keySet());
 	}
 
 	/**
@@ -117,7 +117,7 @@ public class CommonClassLoader extends URLClassLoader {
 	 * @return set of classes
 	 */
 	public Collection<Class<?>> getClasses() {
-		return Collections.unmodifiableCollection(classes.values());
+		return Collections.unmodifiableCollection(this.classes.values());
 	}
 
 	public static CommonPlugin getPlugin(String className) {
