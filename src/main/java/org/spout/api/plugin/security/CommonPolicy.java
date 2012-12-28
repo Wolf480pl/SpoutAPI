@@ -165,7 +165,11 @@ public class CommonPolicy extends Policy {
 		PermissionCollection collection = null;
 		for (Object o : nodes) {
 			if (o instanceof String) {
-				// TODO: Make some permission class for opening browser.
+				BrowserPermission perm = new BrowserPermission((String) o);
+				if (collection == null) {
+					collection = perm.newPermissionCollection();
+				}
+				collection.add(perm);
 			}
 		}
 		return collection;
