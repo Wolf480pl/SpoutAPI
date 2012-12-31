@@ -26,14 +26,16 @@
  */
 package org.spout.api;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.UUID;
 
 import org.spout.api.audio.SoundManager;
+import org.spout.api.entity.Player;
 import org.spout.api.geo.World;
 import org.spout.api.gui.ScreenStack;
 import org.spout.api.input.InputManager;
 import org.spout.api.math.Vector2;
-import org.spout.api.entity.Player;
 import org.spout.api.plugin.PluginStore;
 import org.spout.api.protocol.PortBinding;
 import org.spout.api.render.Camera;
@@ -130,4 +132,6 @@ public interface Client extends Engine {
 	 * @return the screen stack.
 	 */
 	public ScreenStack getScreenStack();
+
+	public void openBrowser(URI uri) throws IOException;
 }
