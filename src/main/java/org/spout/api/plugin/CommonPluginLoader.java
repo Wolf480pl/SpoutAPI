@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,8 @@ import org.spout.api.exception.InvalidDescriptionFileException;
 import org.spout.api.exception.InvalidPluginException;
 import org.spout.api.exception.UnknownDependencyException;
 import org.spout.api.exception.UnknownSoftDependencyException;
+import org.spout.api.plugin.security.CommonPolicy;
+import org.spout.api.plugin.security.InsufficientClearancesException;
 
 public class CommonPluginLoader implements PluginLoader {
 	public static final String YAML_SPOUT = "properties.yml";
@@ -121,12 +124,13 @@ public class CommonPluginLoader implements PluginLoader {
 	}
 
 	@Override
-	public synchronized Plugin loadPlugin(File paramFile) throws InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException {
+	public synchronized Plugin loadPlugin(File paramFile) throws InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException, InsufficientClearancesException {
 		return loadPlugin(paramFile, false);
 	}
 
 	@Override
-	public synchronized Plugin loadPlugin(File paramFile, boolean ignoresoftdepends) throws InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException {
+	public synchronized Plugin loadPlugin(File paramFile, boolean ignoresoftdepends) throws InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException,
+			InsufficientClearancesException {
 		CommonPlugin result;
 		PluginDescriptionFile desc;
 		CommonClassLoader loader;
@@ -134,6 +138,11 @@ public class CommonPluginLoader implements PluginLoader {
 		desc = getDescription(paramFile);
 
 		File dataFolder = new File(paramFile.getParentFile(), desc.getName());
+
+		Policy policy = Policy.getPolicy();
+		if (policy != null && policy instanceof CommonPolicy) {
+			((CommonPolicy) policy).checkPluginLoad(desc, dataFolder);
+		}
 
 		processDependencies(desc);
 

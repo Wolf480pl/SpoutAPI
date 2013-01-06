@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.spout.api.exception.InvalidDescriptionFileException;
 import org.spout.api.exception.InvalidPluginException;
 import org.spout.api.exception.UnknownDependencyException;
+import org.spout.api.plugin.security.InsufficientClearancesException;
 
 public interface PluginLoader {
 	public abstract Pattern[] getPatterns();
@@ -56,8 +57,9 @@ public interface PluginLoader {
 	 * @throws InvalidPluginException
 	 * @throws UnknownDependencyException
 	 * @throws InvalidDescriptionFileException
+	 * @throws InsufficientClearancesException
 	 */
-	public abstract Plugin loadPlugin(File file) throws InvalidPluginException, InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException;
+	public abstract Plugin loadPlugin(File file) throws InvalidPluginException, InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException, InsufficientClearancesException;
 
 	/**
 	 * Loads the file as a plugin
@@ -69,6 +71,8 @@ public interface PluginLoader {
 	 * @throws InvalidPluginException
 	 * @throws UnknownDependencyException
 	 * @throws InvalidDescriptionFileException
+	 * @throws InsufficientClearancesException
 	 */
-	public abstract Plugin loadPlugin(File file, boolean paramBoolean) throws InvalidPluginException, InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException;
+	public abstract Plugin loadPlugin(File file, boolean paramBoolean) throws InvalidPluginException, InvalidPluginException, UnknownDependencyException, InvalidDescriptionFileException,
+			InsufficientClearancesException;
 }

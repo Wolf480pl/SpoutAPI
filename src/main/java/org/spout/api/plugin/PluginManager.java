@@ -32,6 +32,7 @@ import java.util.List;
 import org.spout.api.exception.InvalidDescriptionFileException;
 import org.spout.api.exception.InvalidPluginException;
 import org.spout.api.exception.UnknownDependencyException;
+import org.spout.api.plugin.security.InsufficientClearancesException;
 
 public interface PluginManager {
 	/**
@@ -54,8 +55,9 @@ public interface PluginManager {
 	 * @throws InvalidPluginException
 	 * @throws InvalidDescriptionFileException
 	 * @throws UnknownDependencyException
+	 * @throws InsufficientClearancesException
 	 */
-	public abstract Plugin loadPlugin(File file) throws InvalidPluginException, InvalidDescriptionFileException, UnknownDependencyException;
+	public abstract Plugin loadPlugin(File file) throws InvalidPluginException, InvalidDescriptionFileException, UnknownDependencyException, InsufficientClearancesException;
 
 	/**
 	 * Loads all plugins in a directory

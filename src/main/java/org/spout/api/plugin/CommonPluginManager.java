@@ -50,6 +50,7 @@ import org.spout.api.exception.InvalidDescriptionFileException;
 import org.spout.api.exception.InvalidPluginException;
 import org.spout.api.exception.UnknownDependencyException;
 import org.spout.api.meta.SpoutMetaPlugin;
+import org.spout.api.plugin.security.InsufficientClearancesException;
 
 public class CommonPluginManager implements PluginManager {
 	private final Engine engine;
@@ -92,11 +93,12 @@ public class CommonPluginManager implements PluginManager {
 	}
 
 	@Override
-	public synchronized Plugin loadPlugin(File paramFile) throws InvalidPluginException, InvalidDescriptionFileException, UnknownDependencyException {
+	public synchronized Plugin loadPlugin(File paramFile) throws InvalidPluginException, InvalidDescriptionFileException, UnknownDependencyException, InsufficientClearancesException {
 		return loadPlugin(paramFile, false);
 	}
 
-	public synchronized Plugin loadPlugin(File paramFile, boolean ignoreSoftDependencies) throws InvalidPluginException, InvalidDescriptionFileException, UnknownDependencyException {
+	public synchronized Plugin loadPlugin(File paramFile, boolean ignoreSoftDependencies) throws InvalidPluginException, InvalidDescriptionFileException, UnknownDependencyException,
+	InsufficientClearancesException {
 		File update = null;
 
 		if (this.updateDir != null && this.updateDir.isDirectory()) {
@@ -178,6 +180,11 @@ public class CommonPluginManager implements PluginManager {
 					iterator.remove();
 				} catch (InvalidPluginException e) {
 					safelyLog(Level.SEVERE, new StringBuilder().append("Unable to load '").append(file.getName()).append("' in directory '").append(paramFile.getPath()).append("': ").append(e.getMessage()).toString(), e);
+					iterator.remove();
+				} catch (InsufficientClearancesException e) {
+					safelyLog(Level.SEVERE,
+							new StringBuilder().append("Unable to load '").append(file.getName()).append("' in directory '").append(paramFile.getPath()).append("': ").append(e.getMessage())
+									.toString(), e);
 					iterator.remove();
 				}
 

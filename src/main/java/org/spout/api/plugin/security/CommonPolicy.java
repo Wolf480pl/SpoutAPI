@@ -17,6 +17,7 @@ import org.spout.api.Engine;
 import org.spout.api.exception.ConfigurationException;
 import org.spout.api.plugin.CommonClassLoader;
 import org.spout.api.plugin.Plugin;
+import org.spout.api.plugin.PluginDescriptionFile;
 import org.spout.api.util.config.ConfigurationNode;
 import org.spout.api.util.config.yaml.YamlConfiguration;
 
@@ -52,15 +53,25 @@ public class CommonPolicy extends Policy {
 	}
 
 	public CommonPermissionCollection getPluginPermissions(Plugin plugin) {
+		return getPluginPermissions(plugin.getDescription(), plugin.getDataFolder());
+	}
+
+	public CommonPermissionCollection getPluginPermissions(PluginDescriptionFile desc, File dataFolder) {
 		CommonPermissionCollection perms = new CommonPermissionCollection();
 		perms.addAll(defaultPluginPerms);
-		perms.add(new FilePermission(plugin.getDataFolder().getAbsolutePath() + File.separator + "-", "read,write,delete"));
+		perms.add(new FilePermission(dataFolder.getAbsolutePath() + File.separator + "-", "read,write,delete"));
 
-		ConfigurationNode pluginNode = config.getChild(plugin.getName());
+		ConfigurationNode pluginNode = config.getChild(desc.getName());
 		if (pluginNode != null) {
-			perms.addAll(parseFilesystem(pluginNode.getChild("filesystem")));
-			perms.addAll(parseNetwork(pluginNode.getChild("network")));
-			perms.addAll(parseBrowser(pluginNode.getChild("browser")));
+			if (pluginNode.hasChild("filesystem")) {
+				perms.addAll(parseFilesystem(pluginNode.getChild("filesystem")));
+			}
+			if (pluginNode.hasChild("network")) {
+				perms.addAll(parseNetwork(pluginNode.getChild("network")));
+			}
+			if (pluginNode.hasChild("browser")) {
+				perms.addAll(parseBrowser(pluginNode.getChild("browser")));
+			}
 		}
 		return perms;
 	}
@@ -97,6 +108,16 @@ public class CommonPolicy extends Policy {
 			return perms.implies(permission);
 		}
 
+		public boolean impliesAll(PermissionCollection collection) {
+			Enumeration<Permission> elements = collection.elements();
+			while (elements.hasMoreElements()) {
+				if (!implies(elements.nextElement())) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		@Override
 		public Enumeration<Permission> elements() {
 			return perms.elements();
@@ -118,6 +139,25 @@ public class CommonPolicy extends Policy {
 			config.save();
 		} catch (ConfigurationException e) {
 			engine.getLogger().log(Level.SEVERE, "Error saving clearance configuration!", e);
+		}
+	}
+
+	public void checkPluginLoad(PluginDescriptionFile desc, File dataFolder) throws InsufficientClearancesException {
+		ConfigurationNode clearances = desc.getRequiredClearances();
+		CommonPermissionCollection required = new CommonPermissionCollection();
+		if (clearances != null) {
+			if (clearances.hasChild("filesystem")) {
+				required.addAll(parseFilesystem(clearances.getChild("filesystem")));
+			}
+			if (clearances.hasChild("network")) {
+				required.addAll(parseNetwork(clearances.getChild("network")));
+			}
+			if (clearances.hasChild("browser")) {
+				required.addAll(parseBrowser(clearances.getChild("browser")));
+			}
+		}
+		if (!getPluginPermissions(desc, dataFolder).impliesAll(required)) {
+			throw new InsufficientClearancesException();
 		}
 	}
 
@@ -174,4 +214,5 @@ public class CommonPolicy extends Policy {
 		}
 		return collection;
 	}
+
 }
