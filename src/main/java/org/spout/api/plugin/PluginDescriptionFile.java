@@ -63,6 +63,8 @@ public class PluginDescriptionFile {
 	private List<String> softdepends;
 	private String fullname;
 	private Locale codedLocale = Locale.ENGLISH;
+	private ConfigurationNode requiredClearances;
+	private ConfigurationNode optionalClearances;
 
 	public PluginDescriptionFile(String name, String version, String main, Platform platform) {
 		this.name = name;
@@ -100,79 +102,6 @@ public class PluginDescriptionFile {
 			throw new InvalidDescriptionFileException(e);
 		}
 		load(yaml);
-	}
-
-	@SuppressWarnings("unchecked")
-	private void load(Map<?, ?> map) throws InvalidDescriptionFileException {
-		name = getEntry("name", String.class, map);
-		if (!name.matches("^[A-Za-z0-9 _.-]+$")) {
-			throw new InvalidDescriptionFileException("The field 'name' in properties.yml contains invalid characters.");
-		}
-		if (name.toLowerCase().contains("spout")) {
-			throw new InvalidDescriptionFileException("The plugin '" + name + "' has Spout in the name. This is not allowed.");
-		}
-
-		main = getEntry("main", String.class, map);
-		if (!isOfficialPlugin(main)) {
-			for (String namespace : RESTRICTED_NAMES) {
-				if (main.startsWith(namespace)) {
-					throw new InvalidDescriptionFileException("The use of the namespace '" + namespace + "' is not permitted.");
-				}
-			}
-		}
-
-		version = getEntry("version", String.class, map);
-		platform = getEntry("platform", Platform.class, map);
-		fullname = name + " v" + version;
-
-		if (map.containsKey("author")) {
-			authors.add(getEntry("author", String.class, map));
-		}
-
-		if (map.containsKey("authors")) {
-			authors.addAll(getEntry("authors", List.class, map));
-		}
-
-		if (map.containsKey("depends")) {
-			depends = getEntry("depends", List.class, map);
-		}
-
-		if (map.containsKey("softdepends")) {
-			softdepends = getEntry("softdepends", List.class, map);
-		}
-
-		if (map.containsKey("description")) {
-			description = getEntry("description", String.class, map);
-		}
-
-		if (map.containsKey("load")) {
-			load = getEntry("load", LoadOrder.class, map);
-		}
-
-		if (map.containsKey("reload")) {
-			reload = getEntry("reload", Boolean.class, map);
-		}
-
-		if (map.containsKey("website")) {
-			website = getEntry("website", String.class, map);
-		}
-
-		if (map.containsKey("codedlocale")) {
-			Locale[] locales = Locale.getAvailableLocales();
-			for (Locale l : locales) {
-				if (l.getLanguage().equals((new Locale((String) map.get("codedlocale"))).getLanguage())) {
-					codedLocale = l;
-				}
-			}
-		}
-		if (map.containsKey("data")) {
-			Map<?, ?> data = getEntry("data", Map.class, map);
-			for (Map.Entry<?, ?> entry : data.entrySet()) {
-				String key = entry.getKey().toString();
-				String value = entry.getValue().toString();
-				this.data.put(key, value);
-			}
-		}
 	}
 
 	private void load(YamlConfiguration yaml) throws InvalidDescriptionFileException {
@@ -243,6 +172,16 @@ public class PluginDescriptionFile {
 				String key = entry.getKey();
 				String value = entry.getValue().getString();
 				this.data.put(key, value);
+			}
+		}
+
+		if (yaml.hasChild("clearances")) {
+			ConfigurationNode clearances = yaml.getChild("clearances");
+			if (clearances.hasChild("required")) {
+				requiredClearances = clearances.getChild("required");
+			}
+			if (clearances.hasChild("optional")) {
+				optionalClearances = clearances.getChild("optional");
 			}
 		}
 	}
@@ -385,5 +324,23 @@ public class PluginDescriptionFile {
 
 	public String getData(String key) {
 		return data.get(key);
+	}
+
+	/**
+	 * Returns the clearances required for the plugin to work properly (client-side only).
+	 * Will be read from the plugins properties.yml from the field "clearances: required"
+	 * @return
+	 */
+	public ConfigurationNode getRequiredClearances() {
+		return requiredClearances;
+	}
+
+	/**
+	 * Returns the optional clearances, not required for the plugin to work properly (client-side only).
+	 * Will be read from the plugins properties.yml from the field "clearances: optional"
+	 * @return
+	 */
+	public ConfigurationNode getOptionalClearances() {
+		return optionalClearances;
 	}
 }
