@@ -9,6 +9,7 @@ import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.Policy;
 import java.security.ProtectionDomain;
+import java.security.SecurityPermission;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
@@ -27,10 +28,10 @@ public class CommonPolicy extends Policy {
 	private YamlConfiguration config;
 	private Engine engine;
 
-	public CommonPolicy(Engine engine, PermissionCollection defaultPluginPerms, File configFile) {
+	public CommonPolicy(Engine engine, File configFile) {
 		this.engine = engine;
 		this.spoutClassLoader = engine.getClass().getClassLoader();
-		this.defaultPluginPerms = defaultPluginPerms;
+		this.defaultPluginPerms = getDefaultPluginPerms();
 		this.config = new YamlConfiguration(configFile);
 		config.setHeader("This is configuration file for client plugin clearances.",
 				"It is not recommended to edit this file manually. Use the launcher GUI instead.");
@@ -213,6 +214,14 @@ public class CommonPolicy extends Policy {
 			}
 		}
 		return collection;
+	}
+
+	public static PermissionCollection getDefaultPluginPerms() {
+		Permissions perms = new Permissions();
+		perms.add(new RuntimePermission("getClassLoader"));
+		perms.add(new SecurityPermission("getPolicy"));
+		// TODO: Add more here.
+		return perms;
 	}
 
 }
