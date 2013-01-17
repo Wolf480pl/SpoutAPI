@@ -4,13 +4,11 @@ import java.io.File;
 import java.io.FilePermission;
 import java.net.SocketPermission;
 import java.security.AllPermission;
-import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.security.SecurityPermission;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -53,79 +51,6 @@ public class CommonPolicy extends Policy {
 		}
 	}
 
-	public CommonPermissionCollection getPluginPermissions(Plugin plugin) {
-		return getPluginPermissions(plugin.getDescription(), plugin.getDataFolder());
-	}
-
-	public CommonPermissionCollection getPluginPermissions(PluginDescriptionFile desc, File dataFolder) {
-		CommonPermissionCollection perms = new CommonPermissionCollection();
-		perms.addAll(defaultPluginPerms);
-		perms.add(new FilePermission(dataFolder.getAbsolutePath() + File.separator + "-", "read,write,delete"));
-
-		ConfigurationNode pluginNode = config.getChild(desc.getName());
-		if (pluginNode != null) {
-			if (pluginNode.hasChild("filesystem")) {
-				perms.addAll(parseFilesystem(pluginNode.getChild("filesystem")));
-			}
-			if (pluginNode.hasChild("network")) {
-				perms.addAll(parseNetwork(pluginNode.getChild("network")));
-			}
-			if (pluginNode.hasChild("browser")) {
-				perms.addAll(parseBrowser(pluginNode.getChild("browser")));
-			}
-		}
-		return perms;
-	}
-
-	public boolean isSpout(ProtectionDomain domain) {
-		return domain.getClassLoader() == spoutClassLoader;
-	}
-
-	public static class CommonPermissionCollection extends PermissionCollection {
-		private static final long serialVersionUID = -2131850295013966510L;
-		private Permissions perms;
-
-		public CommonPermissionCollection() {
-			perms = new Permissions();
-		}
-
-		public void addAll(PermissionCollection collection) {
-			if (collection == null) {
-				return;
-			}
-			Enumeration<Permission> e = collection.elements();
-			while (e.hasMoreElements()) {
-				add(e.nextElement());
-			}
-		}
-
-		@Override
-		public void add(Permission permission) {
-			perms.add(permission);
-		}
-
-		@Override
-		public boolean implies(Permission permission) {
-			return perms.implies(permission);
-		}
-
-		public boolean impliesAll(PermissionCollection collection) {
-			Enumeration<Permission> elements = collection.elements();
-			while (elements.hasMoreElements()) {
-				if (!implies(elements.nextElement())) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public Enumeration<Permission> elements() {
-			return perms.elements();
-		}
-
-	}
-
 	public void load() {
 		try {
 			config.load();
@@ -160,6 +85,42 @@ public class CommonPolicy extends Policy {
 		if (!getPluginPermissions(desc, dataFolder).impliesAll(required)) {
 			throw new InsufficientClearancesException();
 		}
+	}
+
+	protected CommonPermissionCollection getPluginPermissions(Plugin plugin) {
+		return getPluginPermissions(plugin.getDescription(), plugin.getDataFolder());
+	}
+
+	protected CommonPermissionCollection getPluginPermissions(PluginDescriptionFile desc, File dataFolder) {
+		CommonPermissionCollection perms = new CommonPermissionCollection();
+		perms.addAll(defaultPluginPerms);
+		perms.add(new FilePermission(dataFolder.getAbsolutePath() + File.separator + "-", "read,write,delete"));
+
+		ConfigurationNode pluginNode = config.getChild(desc.getName());
+		if (pluginNode != null) {
+			if (pluginNode.hasChild("filesystem")) {
+				perms.addAll(parseFilesystem(pluginNode.getChild("filesystem")));
+			}
+			if (pluginNode.hasChild("network")) {
+				perms.addAll(parseNetwork(pluginNode.getChild("network")));
+			}
+			if (pluginNode.hasChild("browser")) {
+				perms.addAll(parseBrowser(pluginNode.getChild("browser")));
+			}
+		}
+		return perms;
+	}
+
+	protected boolean isSpout(ProtectionDomain domain) {
+		return domain.getClassLoader() == spoutClassLoader;
+	}
+
+	protected static PermissionCollection getDefaultPluginPerms() {
+		Permissions perms = new Permissions();
+		perms.add(new RuntimePermission("getClassLoader"));
+		perms.add(new SecurityPermission("getPolicy"));
+		// TODO: Add more here.
+		return perms;
 	}
 
 	private PermissionCollection parseFilesystem(ConfigurationNode node) {
@@ -215,13 +176,4 @@ public class CommonPolicy extends Policy {
 		}
 		return collection;
 	}
-
-	public static PermissionCollection getDefaultPluginPerms() {
-		Permissions perms = new Permissions();
-		perms.add(new RuntimePermission("getClassLoader"));
-		perms.add(new SecurityPermission("getPolicy"));
-		// TODO: Add more here.
-		return perms;
-	}
-
 }
