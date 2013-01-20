@@ -51,6 +51,11 @@ public class CommonPolicy extends Policy {
 		}
 	}
 
+	@Override
+	public void refresh() {
+		load();
+	}
+
 	public void load() {
 		try {
 			config.load();
@@ -119,6 +124,7 @@ public class CommonPolicy extends Policy {
 		Permissions perms = new Permissions();
 		perms.add(new RuntimePermission("getClassLoader"));
 		perms.add(new SecurityPermission("getPolicy"));
+		perms.add(new SecurityPermission("insertProvider.SunJSSE"));
 		// TODO: Add more here.
 		return perms;
 	}
