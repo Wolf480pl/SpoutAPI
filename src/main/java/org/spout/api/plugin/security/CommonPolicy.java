@@ -42,13 +42,16 @@ public class CommonPolicy extends Policy {
 			return new AllPermission().newPermissionCollection();
 		} else {
 			ClassLoader loader = domain.getClassLoader();
-			while (!(loader instanceof CommonClassLoader)) {
+			while (loader != null) {
+				if (loader instanceof CommonClassLoader) {
+					CommonPermissionCollection perms = getPluginPermissions(((CommonClassLoader) loader).getPlugin());
+					perms.addAll(domain.getPermissions()); // These domain static permissions are usually read perms for the codesource location.
+					return perms;
+				}
 				loader = loader.getParent();
 			}
-			CommonPermissionCollection perms = getPluginPermissions(((CommonClassLoader) loader).getPlugin());
-			perms.addAll(domain.getPermissions()); // These domain static permissions are usually read perms for the codesource location.
-			return perms;
 		}
+		return null;
 	}
 
 	@Override
