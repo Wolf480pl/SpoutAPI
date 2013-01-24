@@ -3,10 +3,12 @@ package org.spout.api.plugin.security;
 import java.io.File;
 import java.io.FilePermission;
 import java.net.SocketPermission;
+import java.security.AccessController;
 import java.security.AllPermission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.Policy;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.SecurityPermission;
 import java.util.List;
@@ -37,21 +39,26 @@ public class CommonPolicy extends Policy {
 	}
 
 	@Override
-	public PermissionCollection getPermissions(ProtectionDomain domain) {
-		if (isSpout(domain)) {
-			return new AllPermission().newPermissionCollection();
-		} else {
-			ClassLoader loader = domain.getClassLoader();
-			while (loader != null) {
-				if (loader instanceof CommonClassLoader) {
-					CommonPermissionCollection perms = getPluginPermissions(((CommonClassLoader) loader).getPlugin());
-					perms.addAll(domain.getPermissions()); // These domain static permissions are usually read perms for the codesource location.
-					return perms;
+	public PermissionCollection getPermissions(final ProtectionDomain domain) {
+		return AccessController.doPrivileged(new PrivilegedAction<PermissionCollection>() {
+			@Override
+			public PermissionCollection run() {
+				if (isSpout(domain)) {
+					return new AllPermission().newPermissionCollection();
+				} else {
+					ClassLoader loader = domain.getClassLoader();
+					while (loader != null) {
+						if (loader instanceof CommonClassLoader) {
+							CommonPermissionCollection perms = getPluginPermissions(((CommonClassLoader) loader).getPlugin());
+							perms.addAll(domain.getPermissions()); // These domain static permissions are usually read perms for the codesource location.
+							return perms;
+						}
+						loader = loader.getParent();
+					}
 				}
-				loader = loader.getParent();
+				return null;
 			}
-		}
-		return null;
+		});
 	}
 
 	@Override
