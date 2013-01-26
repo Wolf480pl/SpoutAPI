@@ -31,12 +31,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
-import org.spout.api.Client;
-import org.spout.api.Spout;
 import org.spout.api.command.CommandRegistrationsFactory;
-import org.spout.api.input.Keyboard;
-import org.spout.api.input.Mouse;
 import org.spout.api.plugin.Platform;
 import org.spout.api.util.Named;
 
@@ -72,10 +70,10 @@ public class AnnotatedCommandRegistrationFactory implements CommandRegistrations
 		if (injector != null) {
 			instance = injector.newInstance(commands);
 		}
-		
+
 		return register(owner, commands, instance, parent);
 	}
-	
+
 	protected boolean register(Named owner, Class<?> commands, Object instance, org.spout.api.command.Command parent) {
 		boolean success = methodRegistration(owner, commands, instance, parent);
 		success &= nestedClassRegistration(owner, commands, instance, parent);
@@ -103,9 +101,15 @@ public class AnnotatedCommandRegistrationFactory implements CommandRegistrations
 
 	protected final boolean methodRegistration(Named owner, Class<?> commands, Object instance, org.spout.api.command.Command parent) {
 		boolean success = true, anyRegistered = false;
-		for (Method method : commands.getDeclaredMethods()) {
+		for (final Method method : commands.getDeclaredMethods()) {
 			// Basic checks
-			method.setAccessible(true);
+			AccessController.doPrivileged(new PrivilegedAction() {
+				@Override
+				public Object run() {
+					method.setAccessible(true);
+					return null;
+				}
+			});
 			if (!Modifier.isStatic(method.getModifiers()) && instance == null) {
 				continue;
 			}
@@ -120,7 +124,7 @@ public class AnnotatedCommandRegistrationFactory implements CommandRegistrations
 					success &= create(owner, clazz, child);
 				}
 				if ( !method.getAnnotation(NestedCommand.class).ignoreBody() ) {
-				    child.setExecutor(executorFactory.getAnnotatedCommandExecutor(instance, method));
+					child.setExecutor(executorFactory.getAnnotatedCommandExecutor(instance, method));
 				}
 			} else {
 				child.setExecutor(executorFactory.getAnnotatedCommandExecutor(instance, method));
@@ -191,11 +195,11 @@ public class AnnotatedCommandRegistrationFactory implements CommandRegistrations
 		}
 		return success && anyRegistered;
 	}
-	
+
 	public final Injector getInjector() {
 		return injector;
 	}
-	
+
 	public final AnnotatedCommandExecutorFactory getExecutorFactory() {
 		return executorFactory;
 	}

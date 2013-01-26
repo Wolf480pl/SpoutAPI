@@ -159,6 +159,7 @@ public class CommonPolicy extends Policy {
 	protected static PermissionCollection getDefaultPluginPerms() {
 		Permissions perms = new Permissions();
 		perms.add(new RuntimePermission("getClassLoader"));
+		perms.add(new RuntimePermission("accessDeclaredMembers"));
 		perms.add(new SecurityPermission("getPolicy"));
 		perms.add(new SecurityPermission("insertProvider.SunJSSE"));
 		// TODO: Add more here.

@@ -28,6 +28,8 @@ package org.spout.api.event;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -101,8 +103,14 @@ public class SimpleEventManager implements EventManager {
 	 */
 	private HandlerList getEventListeners(Class<? extends Event> type) {
 		try {
-			Method method = getRegistrationClass(type).getDeclaredMethod("getHandlerList");
-			method.setAccessible(true);
+			final Method method = getRegistrationClass(type).getDeclaredMethod("getHandlerList");
+			AccessController.doPrivileged(new PrivilegedAction() {
+				@Override
+				public Object run() {
+					method.setAccessible(true);
+					return null;
+				}
+			});
 			return (HandlerList) method.invoke(null);
 		} catch (Exception e) {
 			throw new IllegalPluginAccessException(e.toString());
@@ -149,7 +157,13 @@ public class SimpleEventManager implements EventManager {
 
 			eventClass = checkClass.asSubclass(Event.class);
 
-			method.setAccessible(true);
+			AccessController.doPrivileged(new PrivilegedAction() {
+				@Override
+				public Object run() {
+					method.setAccessible(true);
+					return null;
+				}
+			});
 			Set<ListenerRegistration> eventSet = ret.get(eventClass);
 			if (eventSet == null) {
 				eventSet = new HashSet<ListenerRegistration>();

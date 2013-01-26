@@ -26,12 +26,14 @@
  */
 package org.spout.api.util.config;
 
-import org.spout.api.exception.ConfigurationException;
-import org.spout.api.util.ReflectionUtils;
-
 import java.lang.reflect.Field;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.spout.api.exception.ConfigurationException;
+import org.spout.api.util.ReflectionUtils;
 
 /**
  * This is a configuration holder class that takes another Configuration and wraps some
@@ -44,8 +46,14 @@ public abstract class ConfigurationHolderConfiguration extends ConfigurationWrap
 
 	public ConfigurationHolderConfiguration(Configuration base) {
 		super(base);
-		for (Field field : ReflectionUtils.getDeclaredFieldsRecur(getClass())) {
-			field.setAccessible(true);
+		for (final Field field : ReflectionUtils.getDeclaredFieldsRecur(getClass())) {
+			AccessController.doPrivileged(new PrivilegedAction() {
+				@Override
+				public Object run() {
+					field.setAccessible(true);
+					return null;
+				}
+			});
 
 			if (ConfigurationHolder.class.isAssignableFrom(field.getType())) {
 				holders.add(field);
