@@ -38,7 +38,7 @@ public class OptOutPermission extends Permission {
 
 	public OptOutPermission(PermissionCollection excluded) {
 		super("<almost all>");
-		this.excluded = excluded;
+		this.excluded = new CommonPermissionCollection(excluded);
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class OptOutPermission extends Permission {
 	}
 
 	static final class OptOutPermissionCollection extends PermissionCollection {
-		CommonPermissionCollection excluded = new CommonPermissionCollection();
+		private final CommonPermissionCollection excluded = new CommonPermissionCollection();
 
 		@Override
 		public void add(Permission permission) {
@@ -92,9 +92,7 @@ public class OptOutPermission extends Permission {
 		@Override
 		public Enumeration<Permission> elements() {
 			List<Permission> list = new ArrayList<Permission>();
-			CommonPermissionCollection perms = new CommonPermissionCollection();
-			perms.addAll(excluded);
-			list.add(new OptOutPermission(perms));
+			list.add(new OptOutPermission(excluded));
 			return Collections.enumeration(list);
 		}
 

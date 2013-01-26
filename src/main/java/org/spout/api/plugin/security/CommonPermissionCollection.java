@@ -39,6 +39,11 @@ public class CommonPermissionCollection extends PermissionCollection {
 		perms = new Permissions();
 	}
 
+	public CommonPermissionCollection(PermissionCollection collection) {
+		this();
+		addAll(collection);
+	}
+
 	public void addAll(PermissionCollection collection) {
 		if (collection == null) {
 			return;
