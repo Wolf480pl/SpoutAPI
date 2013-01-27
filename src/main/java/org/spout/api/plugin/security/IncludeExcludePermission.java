@@ -26,37 +26,50 @@
  */
 package org.spout.api.plugin.security;
 
+import java.security.AllPermission;
 import java.security.Permission;
 import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
-public class OptOutPermission extends Permission {
+public class IncludeExcludePermission extends Permission {
+	private static final long serialVersionUID = -2675188463008189372L;
+	private final PermissionCollection included;
 	private final PermissionCollection excluded;
 
-	public OptOutPermission(PermissionCollection excluded) {
-		super("<almost all>");
+	public IncludeExcludePermission(PermissionCollection included, PermissionCollection excluded) {
+		super("<include/exclude>");
+		this.included = new CommonPermissionCollection(included);
+		this.excluded = new CommonPermissionCollection(excluded);
+	}
+
+	public IncludeExcludePermission(PermissionCollection excluded) {
+		super("<exclude>");
+		this.included = new Permissions();
+		this.included.add(new AllPermission());
 		this.excluded = new CommonPermissionCollection(excluded);
 	}
 
 	@Override
 	public boolean implies(Permission permission) {
-		return !excluded.implies(permission);
+		return included.implies(permission) && !excluded.implies(permission);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof OptOutPermission) {
-			return this.excluded.equals(((OptOutPermission) obj).excluded);
+		if (obj instanceof IncludeExcludePermission) {
+			IncludeExcludePermission that = (IncludeExcludePermission) obj;
+			return that.implies(this) && this.implies(that);
 		}
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return excluded.hashCode();
+		return excluded.hashCode() ^ included.hashCode();
 	}
 
 	@Override
@@ -65,36 +78,48 @@ public class OptOutPermission extends Permission {
 	}
 
 	@Override
-	public PermissionCollection newPermissionCollection() {
-		return new OptOutPermissionCollection();
+	public IncludeExcludePermissionCollection newPermissionCollection() {
+		return new IncludeExcludePermissionCollection();
 	}
 
-	static final class OptOutPermissionCollection extends PermissionCollection {
+	@Override
+	public String toString() {
+		return "( " + getClass().getName() + "\n" + "included: " + included.toString() + "excluded:" + excluded.toString() + ")";
+	}
+
+	static final class IncludeExcludePermissionCollection extends PermissionCollection {
+		private static final long serialVersionUID = 3054629744490459143L;
+		private final CommonPermissionCollection included = new CommonPermissionCollection();
 		private final CommonPermissionCollection excluded = new CommonPermissionCollection();
 
 		@Override
 		public void add(Permission permission) {
-			if (!(permission instanceof OptOutPermission)) {
+			if (!(permission instanceof IncludeExcludePermission)) {
 				throw new IllegalArgumentException("invalid permission: " + permission);
 			}
 			if (isReadOnly()) {
 				throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
 			}
-			OptOutPermission perm = (OptOutPermission) permission;
+			IncludeExcludePermission perm = (IncludeExcludePermission) permission;
+			included.addAll(perm.included);
 			excluded.addAll(perm.excluded);
 		}
 
 		@Override
 		public boolean implies(Permission permission) {
-			return !excluded.implies(permission);
+			return included.implies(permission) && !excluded.implies(permission);
 		}
 
 		@Override
 		public Enumeration<Permission> elements() {
 			List<Permission> list = new ArrayList<Permission>();
-			list.add(new OptOutPermission(excluded));
+			list.add(new IncludeExcludePermission(excluded));
 			return Collections.enumeration(list);
 		}
 
+		@Override
+		public String toString() {
+			return "( " + getClass().getName() + "\n" + "included: " + included.toString() + "excluded:" + excluded.toString() + ")";
+		}
 	}
 }

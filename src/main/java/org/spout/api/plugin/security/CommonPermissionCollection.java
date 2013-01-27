@@ -31,12 +31,16 @@ import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.util.Enumeration;
 
+import org.spout.api.plugin.security.IncludeExcludePermission.IncludeExcludePermissionCollection;
+
 public class CommonPermissionCollection extends PermissionCollection {
 	private static final long serialVersionUID = -2131850295013966510L;
 	private Permissions perms;
+	private PermissionCollection optout;
 
 	public CommonPermissionCollection() {
 		perms = new Permissions();
+		optout = new IncludeExcludePermissionCollection();
 	}
 
 	public CommonPermissionCollection(PermissionCollection collection) {
@@ -56,12 +60,16 @@ public class CommonPermissionCollection extends PermissionCollection {
 
 	@Override
 	public void add(Permission permission) {
-		perms.add(permission);
+		if (permission instanceof IncludeExcludePermission) {
+			optout.add(permission);
+		} else {
+			perms.add(permission);
+		}
 	}
 
 	@Override
 	public boolean implies(Permission permission) {
-		return perms.implies(permission);
+		return optout.implies(permission) || perms.implies(permission);
 	}
 
 	public boolean impliesAll(PermissionCollection collection) {

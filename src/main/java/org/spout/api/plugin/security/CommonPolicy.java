@@ -45,6 +45,7 @@ import org.spout.api.exception.ConfigurationException;
 import org.spout.api.plugin.CommonClassLoader;
 import org.spout.api.plugin.Plugin;
 import org.spout.api.plugin.PluginDescriptionFile;
+import org.spout.api.plugin.security.IncludeExcludePermission.IncludeExcludePermissionCollection;
 import org.spout.api.util.config.ConfigurationNode;
 import org.spout.api.util.config.yaml.YamlConfiguration;
 
@@ -77,7 +78,10 @@ public class CommonPolicy extends Policy {
 						if (loader instanceof CommonClassLoader) {
 							CommonPermissionCollection perms = getPluginPermissions(((CommonClassLoader) loader).getPlugin());
 							perms.addAll(domain.getPermissions()); // These domain static permissions are usually read perms for the codesource location.
-							return perms;
+
+							IncludeExcludePermissionCollection includeExclude = new IncludeExcludePermissionCollection();
+							includeExclude.add(new IncludeExcludePermission(perms, getPluginExcludedPerms()));
+							return includeExclude;
 						}
 						loader = loader.getParent();
 					}
@@ -163,6 +167,14 @@ public class CommonPolicy extends Policy {
 		perms.add(new SecurityPermission("getPolicy"));
 		perms.add(new SecurityPermission("insertProvider.SunJSSE"));
 		// TODO: Add more here.
+		return perms;
+	}
+
+	protected PermissionCollection getPluginExcludedPerms() {
+		Permissions perms = new Permissions();
+		perms.add(new FilePermission(config.getFile().getPath(), "read,write,execute,delete"));
+		perms.add(new FilePermission(engine.getClass().getProtectionDomain().getCodeSource().getLocation().getFile(), "read,write,execute,delete"));
+		// TODO: Add lastlogin here.
 		return perms;
 	}
 
