@@ -133,7 +133,9 @@ public class CommonPolicy extends Policy {
 	}
 
 	protected CommonPermissionCollection getPluginPermissions(Plugin plugin) {
-		return getPluginPermissions(plugin.getDescription(), plugin.getDataFolder());
+		CommonPermissionCollection perms = getPluginPermissions(plugin.getDescription(), plugin.getDataFolder());
+		perms.addAll(engine.getFilesystem().getPluginResourcePermissions(plugin));
+		return perms;
 	}
 
 	protected CommonPermissionCollection getPluginPermissions(PluginDescriptionFile desc, File dataFolder) {
@@ -165,7 +167,6 @@ public class CommonPolicy extends Policy {
 		perms.add(new RuntimePermission("getClassLoader"));
 		perms.add(new RuntimePermission("accessDeclaredMembers"));
 		perms.add(new SecurityPermission("getPolicy"));
-		perms.add(new SecurityPermission("insertProvider.SunJSSE"));
 		// TODO: Add more here.
 		return perms;
 	}

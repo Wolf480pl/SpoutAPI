@@ -28,8 +28,10 @@ package org.spout.api;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.security.PermissionCollection;
 import java.util.List;
 
+import org.spout.api.plugin.Plugin;
 import org.spout.api.resource.Resource;
 import org.spout.api.resource.ResourceLoader;
 import org.spout.api.resource.ResourceNotFoundException;
@@ -38,7 +40,7 @@ import org.spout.api.resource.ResourcePathResolver;
 /**
  * A FileSystem handles the loading of client and server resources.
  * 
- * On the {@link Client}, loading a resource will load the resource from the hard-drive.  
+ * On the {@link Client}, loading a resource will load the resource from the hard-drive.
  * On the {@link Server}, it will notify all clients to load the resource, as well as provide a representation of that resource.
  */
 public interface FileSystem {
@@ -53,6 +55,14 @@ public interface FileSystem {
 	 * Called after startup
 	 */
 	public abstract void postStartup();
+
+	/**
+	 * Used by the security system to determine what permissions plugins require to access the resource system.
+	 * 
+	 * @param plugin
+	 * @return
+	 */
+	public abstract PermissionCollection getPluginResourcePermissions(Plugin plugin);
 
 	/**
 	 * Attempts to load the given path as an {@link InputStream}. If the file
@@ -70,7 +80,7 @@ public interface FileSystem {
 	public abstract InputStream getResourceStream(URI path) throws ResourceNotFoundException;
 
 	/**
-	 * Attempts to load the given String as an {@link InputStream} 
+	 * Attempts to load the given String as an {@link InputStream}
 	 * This method will attempt to invoke {@link #getResource(URI)} if the path is valid.
 	 * If an invalid path is passed in, this method will throw an {@link InvalidArgumentException}
 	 * 
@@ -85,7 +95,7 @@ public interface FileSystem {
 	 * @param loader The loader to register.
 	 */
 	public abstract void registerLoader(ResourceLoader<? extends Resource> loader);
-	
+
 	/**
 	 * Attempts to load the given path as a resource into the FileSystem.
 	 * 
