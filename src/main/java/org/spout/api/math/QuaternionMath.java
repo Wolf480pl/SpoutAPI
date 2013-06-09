@@ -64,6 +64,27 @@ public class QuaternionMath {
 	}
 
 	/**
+	 * Conjugate the given Quaternion
+	 * @param a the Quaternion to conjugate
+	 * @return the conjugated Quaternion
+	 * @see #invert(Quaternion)
+	 * @see MatrixMath#transpose(Matrix)
+	 */
+	public static Quaternion conjugate(Quaternion a) {
+		return new Quaternion(-a.x, -a.y, -a.z, a.w, true);
+	}
+
+	/**
+	 * Invert the given Quaternion
+	 * @param a the Quaternion to invert
+	 * @return inverted Quaternion
+	 * @see #conjugate(Quaternion)
+	 */
+	public static Quaternion invert(Quaternion a) {
+		return normalize(conjugate(a));
+	}
+
+	/**
 	 * Constructs and returns a new Quaternion that is A * B
 	 * @param a The left quaternion
 	 * @param b The right quaternion

@@ -160,6 +160,24 @@ public class QuaternionTest {
 	}
 
 	@Test
+	public void testConjugateQuaternion() {
+		Quaternion a = new Quaternion(5, 3, 1, 1, true);
+		Quaternion b = a.conjugate();
+		testValues(b, -5, -3, -1, 1);
+		Quaternion res = b.multiply(a);
+		testValues(res.normalize(), 0, 0, 0, 1);
+	}
+
+	@Test
+	public void testInvertQuaternion() {
+		Quaternion a = new Quaternion(5, 3, 1, 1, true).normalize();
+		Quaternion b = a.invert();
+		testValues(b, -5 / 6f, -3 / 6f, -1 / 6f, 1 / 6f);
+		Quaternion res = b.multiply(a);
+		testValues(res, 0, 0, 0, 1);
+	}
+
+	@Test
 	public void testRotateQuaternionDoubleVector3() {
 		float qx, qy, qz, qw;
 		float x = 1;

@@ -186,6 +186,25 @@ public class Quaternion implements Serializable {
 	}
 
 	/**
+	 * Conjugate this Quaternion
+	 * @return the conjugated Quaternion
+	 * @see #invert()
+	 * @see Matrix#transpose()
+	 */
+	public Quaternion conjugate() {
+		return QuaternionMath.conjugate(this);
+	}
+
+	/**
+	 * Invert this Quaternion
+	 * @return the inverted Quaternion
+	 * @see #conjugate()
+	 */
+	public Quaternion invert() {
+		return QuaternionMath.invert(this);
+	}
+
+	/**
 	 * Multiplies this Quaternion by the other Quaternion
 	 * @param o
 	 * @return
